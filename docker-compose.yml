@@ -1,0 +1,23 @@
+version: '3.8'
+services:
+  mosquitto:
+    image: eclipse-mosquitto
+    container_name: mosquitto
+    restart: always
+    ports:
+      - "1884:1884"
+      - "9002:9002"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+
+  mqtt-broker:
+    build: .
+    container_name: mqtt-broker
+    depends_on:
+      - mosquitto
+    ports:
+      - "3000:3000"
+    environment:
+      - MQTT_BROKER_URL=mqtt://mosquitto:1883
