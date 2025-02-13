@@ -1,23 +1,22 @@
 version: '3.8'
 services:
-  mosquitto:
-    image: eclipse-mosquitto
-    container_name: mosquitto
-    restart: always
+  rabbitmq:
+    image: heidiks/rabbitmq-delayed-message-exchange:latest
+    container_name: rabbitmq-mqtt
+    restart: unless-stopped
     ports:
-      - "1884:1884"
-      - "9002:9002"
-    volumes:
-      - ./mosquitto/config:/mosquitto/config
-      - ./mosquitto/data:/mosquitto/data
-      - ./mosquitto/log:/mosquitto/log
-
-  mqtt-broker:
-    build: .
-    container_name: mqtt-broker
-    depends_on:
-      - mosquitto
-    ports:
-      - "3000:3000"
+      - "5672:5672"   # Porta padrão do RabbitMQ (AMQP)
+      - "15672:15672" # Porta do painel de administração
+      - "1883:1883"   # Porta MQTT
     environment:
-      - MQTT_BROKER_URL=mqtt://mosquitto:1883
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: PGPWpYJvK9pY0QfYY1IIyzB2TsB0AwlRi8Eou9ktpSA
+      RABBITMQ_CONFIG_FILE: /etc/rabbitmq/rabbitmq.conf
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./enabled_plugins:/rabbitmq/enabled_plugins
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+    command: >
+      bash -c "rabbitmq-plugins enable --offline rabbitmq_mqtt && rabbitmq-server && rabbitmq_amqp1_0 && rabbitmq_auth_backend_cache && rabbitmq_auth_backend_http && rabbitmq_management && rabbitmq_shovel && rabbitmq_shovel_management && rabbitmq_stomp"
+volumes:
+  rabbitmq_data:
